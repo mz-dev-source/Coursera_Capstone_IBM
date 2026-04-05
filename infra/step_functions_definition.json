@@ -1,0 +1,189 @@
+{
+  "Comment": "AI Agent Platform — orchestrates all four agents in parallel then generates a daily summary",
+  "StartAt": "RunAgentsInParallel",
+  "States": {
+    "RunAgentsInParallel": {
+      "Type": "Parallel",
+      "Comment": "Execute Job, CV, TechRadar, and Summary agents concurrently for maximum throughput",
+      "Branches": [
+        {
+          "StartAt": "JobSearchAgent",
+          "States": {
+            "JobSearchAgent": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName.$": "$.job_agent_arn",
+                "Payload": {
+                  "queryStringParameters": {
+                    "role.$": "$.role",
+                    "location.$": "$.location",
+                    "skills.$": "$.skills"
+                  }
+                }
+              },
+              "ResultPath": "$.job_results",
+              "Retry": [
+                {
+                  "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "JobAgentFailed",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "End": true
+            },
+            "JobAgentFailed": {
+              "Type": "Pass",
+              "Result": {"status": "failed", "agent": "job_search"},
+              "ResultPath": "$.job_results",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "CVOptimizationAgent",
+          "States": {
+            "CVOptimizationAgent": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName.$": "$.cv_agent_arn",
+                "Payload": {
+                  "body.$": "States.JsonToString($.cv_payload)"
+                }
+              },
+              "ResultPath": "$.cv_results",
+              "Retry": [
+                {
+                  "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "CVAgentFailed",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "End": true
+            },
+            "CVAgentFailed": {
+              "Type": "Pass",
+              "Result": {"status": "failed", "agent": "cv_optimization"},
+              "ResultPath": "$.cv_results",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "TechRadarAgent",
+          "States": {
+            "TechRadarAgent": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName.$": "$.tech_radar_agent_arn",
+                "Payload": {
+                  "queryStringParameters": {
+                    "category.$": "$.tech_category"
+                  }
+                }
+              },
+              "ResultPath": "$.tech_radar_results",
+              "Retry": [
+                {
+                  "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "TechRadarAgentFailed",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "End": true
+            },
+            "TechRadarAgentFailed": {
+              "Type": "Pass",
+              "Result": {"status": "failed", "agent": "tech_radar"},
+              "ResultPath": "$.tech_radar_results",
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "AggregateResults",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.parallel_error"
+        }
+      ]
+    },
+    "AggregateResults": {
+      "Type": "Pass",
+      "Comment": "Merge parallel outputs into a single aggregated payload",
+      "Parameters": {
+        "job_results.$": "$[0].job_results",
+        "cv_results.$": "$[1].cv_results",
+        "tech_radar_results.$": "$[2].tech_radar_results"
+      },
+      "Next": "GenerateDailySummary"
+    },
+    "GenerateDailySummary": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName.$": "$.summary_agent_arn",
+        "Payload.$": "$"
+      },
+      "ResultPath": "$.summary",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.TooManyRequestsException"],
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "SummaryFailed",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "WorkflowSucceeded"
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    },
+    "SummaryFailed": {
+      "Type": "Pass",
+      "Result": {"status": "partial_success", "summary": "Summary generation failed; partial results available"},
+      "ResultPath": "$.summary",
+      "Next": "WorkflowSucceeded"
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Error": "AgentOrchestrationError",
+      "Cause": "One or more agents failed during parallel execution"
+    }
+  }
+}

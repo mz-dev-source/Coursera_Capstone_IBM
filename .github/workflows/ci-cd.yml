@@ -1,0 +1,231 @@
+name: CI/CD Pipeline — AI Agent Platform
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  AWS_REGION: us-east-1
+  PYTHON_VERSION: "3.12"
+  TERRAFORM_VERSION: "1.7.5"
+
+jobs:
+  # ── Lint & Static Analysis ─────────────────────────────────────────────────
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install lint dependencies
+        run: pip install flake8 pylint black isort
+
+      - name: Check formatting (black)
+        run: black --check services/ shared/ tests/
+
+      - name: Check import order (isort)
+        run: isort --check-only services/ shared/ tests/
+
+      - name: Lint (flake8)
+        run: flake8 services/ shared/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+
+  # ── Unit Tests ────────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/unit/ \
+            --tb=short \
+            --cov=services \
+            --cov=shared \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            -v
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ── Terraform Validation ──────────────────────────────────────────────────
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform fmt check
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (local backend)
+        working-directory: infra/terraform
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: infra/terraform
+        run: terraform validate
+
+  # ── Security Scan ─────────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit security scan
+        run: |
+          bandit -r services/ shared/ \
+            -ll \
+            --exclude tests/ \
+            -f json \
+            -o bandit-report.json || true
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # ── Deploy to Dev ─────────────────────────────────────────────────────────
+  deploy-dev:
+    name: Deploy — Dev
+    needs: [lint, test, terraform-validate, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Package Lambda dependencies
+        run: |
+          pip install -r requirements.txt --target services/job_agent/
+          pip install -r requirements.txt --target services/cv_agent/
+          pip install -r requirements.txt --target services/tech_radar_agent/
+          pip install -r requirements.txt --target services/summary_agent/
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        working-directory: infra/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=ai-agent-platform/dev/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Terraform plan
+        working-directory: infra/terraform
+        run: terraform plan -var="environment=dev" -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve tfplan
+
+  # ── Deploy to Production ──────────────────────────────────────────────────
+  deploy-prod:
+    name: Deploy — Production
+    needs: [lint, test, terraform-validate, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Package Lambda dependencies
+        run: |
+          pip install -r requirements.txt --target services/job_agent/
+          pip install -r requirements.txt --target services/cv_agent/
+          pip install -r requirements.txt --target services/tech_radar_agent/
+          pip install -r requirements.txt --target services/summary_agent/
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        working-directory: infra/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_PROD }}" \
+            -backend-config="key=ai-agent-platform/prod/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Terraform plan
+        working-directory: infra/terraform
+        run: terraform plan -var="environment=prod" -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve tfplan
