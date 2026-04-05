@@ -66,6 +66,21 @@
 
 ---
 
+### ✅ Livrables de fin de Phase 1 — Fondations
+
+> Avant de passer à la Phase 2, vous devez pouvoir cocher **les 4 livrables suivants** :
+
+| # | Livrable | Format | Critère de validation |
+|---|---------|--------|-----------------------|
+| 1 | **Carnet de prompts juridiques** | Document Notion ou Google Docs | Minimum 20 prompts testés et annotés (rôle, contexte, résultat obtenu) |
+| 2 | **Analyse GPT d'un contrat réel** | Capture d'écran commentée | Un NDA ou CDI analysé avec identification de 3 clauses à risque |
+| 3 | **Fiche de synthèse RGPD vs AI Act** | PDF ou Notion (2 pages max) | Couvre : droits des personnes, obligations entreprises, catégories de risques IA |
+| 4 | **Premier post LinkedIn publié** | Post LinkedIn | Présente votre démarche de reconversion ou un apprentissage de la semaine |
+
+> 💡 **Ces livrables constituent votre base de portefeuille.** Conservez-les : ils serviront dans les études de cas de la semaine 10.
+
+---
+
 ### PHASE 2 — Spécialisation Legal Tech (Semaines 4–6)
 
 #### Semaine 4 — Automatisation no-code
@@ -113,6 +128,21 @@
 
 ---
 
+### ✅ Livrables de fin de Phase 2 — Spécialisation Legal Tech
+
+> Avant de passer à la Phase 3, vous devez pouvoir cocher **les 4 livrables suivants** :
+
+| # | Livrable | Format | Critère de validation |
+|---|---------|--------|-----------------------|
+| 1 | **Workflow no-code fonctionnel** | Capture Make.com ou Zapier | Un scénario de bout en bout : déclencheur → action automatique (ex : formulaire → email) |
+| 2 | **Appel API OpenAI réussi** | Capture Postman ou Make.com | Une requête `POST /completions` avec une réponse JSON valide affichée |
+| 3 | **Tableau comparatif de 3 outils Legal Tech** | Tableau Notion ou PDF | Couvre : fonctionnalités, tarif, cas d'usage, limites — pour Harvey AI, Luminance et un 3e outil au choix |
+| 4 | **2 posts LinkedIn publiés** | Posts LinkedIn | Un sur l'automatisation no-code, un sur un outil Legal Tech testé |
+
+> 💡 **Le workflow no-code et l'appel API sont des briques directement réutilisées dans les projets 2 et 3.** Ne passez pas à la Phase 3 sans les avoir validés.
+
+---
+
 ### PHASE 3 — Projets & Portfolio (Semaines 7–9)
 
 #### Semaine 7 — Projet 1 : Analyseur de contrats
@@ -132,6 +162,21 @@
 
 ---
 
+### ✅ Livrables de fin de Phase 3 — Projets & Portfolio
+
+> Avant de passer à la Phase 4, vous devez avoir **3 projets documentés et publiables** :
+
+| # | Livrable | Format | Critère de validation |
+|---|---------|--------|-----------------------|
+| 1 | **Custom GPT d'analyse de contrats** | Lien GPT publié + captures annotées | Testé sur 3 types de contrats (CDI, NDA, prestation), avec exemples avant/après |
+| 2 | **Workflow d'onboarding automatisé** | Schéma Make annoté + vidéo Loom (≤3 min) | Démo complète : formulaire → résumé IA → dossier Drive → email client |
+| 3 | **Outil d'audit RGPD** | Lien démo + exemple de rapport PDF anonymisé | Questionnaire fonctionnel, rapport PDF généré automatiquement, envoi email |
+| 4 | **Page portfolio** | Notion ou GitHub | Les 3 projets présentés avec : contexte, stack, résultats, capture/vidéo |
+
+> 💡 **Ces 3 projets sont votre carte de visite professionnelle.** Chaque livrable doit être accessible via un lien partageable — ne pas laisser en local.
+
+---
+
 ### PHASE 4 — Employabilité (Semaine 10)
 
 **Semaine 10 — Positionnement & prospection**
@@ -141,6 +186,22 @@
 - [ ] Identifier 20 cibles : cabinets d'avocats, startups LegalTech, directions juridiques
 - [ ] Créer une offre freelance structurée (services, tarifs, livrables)
 - [ ] Publier les projets sur un portfolio Notion ou GitHub
+
+---
+
+### ✅ Livrables de fin de Phase 4 — Employabilité (= Fin du programme)
+
+> Le programme est **terminé** lorsque les 5 éléments suivants sont en ligne et opérationnels :
+
+| # | Livrable | Format | Critère de validation |
+|---|---------|--------|-----------------------|
+| 1 | **Profil LinkedIn mis à jour** | Profil LinkedIn public | Titre "Legal AI Specialist", section "À propos" réécrite, 3 certifications affichées |
+| 2 | **3 études de cas portfolio** | Posts LinkedIn ou articles Notion | Chaque étude de cas : contexte client fictif ou réel, problème, solution IA, résultat mesurable |
+| 3 | **Offre freelance structurée** | PDF ou page Notion partageable | Minimum 3 services décrits avec tarif, livrable et délai (ex : audit IA cabinet, custom GPT métier, formation) |
+| 4 | **Liste de 20 prospects qualifiés** | Tableau Notion ou Google Sheets | Nom, structure, contact LinkedIn, message personnalisé rédigé |
+| 5 | **1ère prise de contact envoyée** | Message LinkedIn ou email | Au moins 5 messages de prospection envoyés avec proposition de valeur claire |
+
+> 🎯 **Objectif final :** Décrocher une première mission ou un entretien dans les 2 semaines suivant la fin du programme.
 
 ---
 
