@@ -5,6 +5,7 @@ Unit tests for the Daily Summary Agent.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -51,7 +52,7 @@ def _reload_summary_handler():
     for mod in list(sys.modules.keys()):
         if "summary_agent" in mod or "bedrock_client" in mod or "dynamodb_helper" in mod:
             del sys.modules[mod]
-    sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
     from services.summary_agent import handler
     return handler
 

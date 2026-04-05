@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class TestResponseFormatter:

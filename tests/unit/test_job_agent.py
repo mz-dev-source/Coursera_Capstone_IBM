@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import sys
 import types
 from unittest.mock import MagicMock, patch
@@ -73,7 +74,7 @@ class TestJobAgentHandler:
         if "shared.dynamodb_helper" in sys.modules:
             del sys.modules["shared.dynamodb_helper"]
 
-        sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
         from services.job_agent import handler
 
         event = {
@@ -105,7 +106,7 @@ class TestJobAgentHandler:
         for mod in ["services.job_agent.handler", "shared.bedrock_client", "shared.dynamodb_helper"]:
             sys.modules.pop(mod, None)
 
-        sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
         from services.job_agent import handler
 
         response = handler.lambda_handler({}, {})
@@ -125,7 +126,7 @@ class TestJobAgentHandler:
         for mod in ["services.job_agent.handler", "shared.bedrock_client", "shared.dynamodb_helper"]:
             sys.modules.pop(mod, None)
 
-        sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
         from services.job_agent import handler
 
         response = handler.lambda_handler({"queryStringParameters": {"role": "SWE"}}, {})
@@ -137,7 +138,7 @@ class TestJobAgentHandler:
         """_parse_jobs must not raise on malformed Bedrock output."""
         for mod in ["services.job_agent.handler", "shared.bedrock_client", "shared.dynamodb_helper"]:
             sys.modules.pop(mod, None)
-        sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
         from services.job_agent import handler
 
         result = handler._parse_jobs("This is not JSON {{{{")
@@ -149,7 +150,7 @@ class TestJobAgentHandler:
         """_parse_jobs must strip ```json fences before parsing."""
         for mod in ["services.job_agent.handler"]:
             sys.modules.pop(mod, None)
-        sys.path.insert(0, "/home/runner/work/Coursera_Capstone_IBM/Coursera_Capstone_IBM")
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
         from services.job_agent import handler
 
         wrapped = f"```json\n{SAMPLE_JOBS_JSON}\n```"
